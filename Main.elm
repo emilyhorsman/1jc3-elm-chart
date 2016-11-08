@@ -95,22 +95,22 @@ drawChart t maxSalary avgSalary dataGroups =
         offset index shape =
             Maybe.map (move ( 0, toFloat (index * -40) )) shape
 
-        labelsColumn =
-            List.map labelsFromDataGroup dataGroups
+        group' lists =
+            lists
                 |> addGroupSeperators
                 |> flatten
                 |> List.indexedMap offset
                 |> justValues
                 |> group
+
+        labelsColumn =
+            List.map labelsFromDataGroup dataGroups
+                |> group'
                 |> move ( 0, 220 )
 
         values =
             List.map (valuesFromDataGroup maxSalary) dataGroups
-                |> addGroupSeperators
-                |> flatten
-                |> List.indexedMap offset
-                |> justValues
-                |> group
+                |> group'
                 |> move ( 200, 220 )
 
         maxX =
