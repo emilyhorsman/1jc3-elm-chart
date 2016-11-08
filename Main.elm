@@ -5,6 +5,7 @@ import String
 import List
 import Result
 import Maybe
+import Array
 import Debug exposing (log)
 
 
@@ -12,7 +13,8 @@ chart t =
     text (toString t) |> filled black
 
 
-type alias DataGroup = List AverageIncomeRow
+type alias DataGroup =
+    List AverageIncomeRow
 
 
 type alias AverageIncomeRow =
@@ -21,35 +23,50 @@ type alias AverageIncomeRow =
     , men : Maybe Int
     }
 
-type alias ParsedLine = (Maybe String, Maybe Int)
+
+type alias ParsedLine =
+    ( Maybe String, Maybe Int )
 
 
-group : List Int -> List a -> List (List a)
+group : List ( Int, Int ) -> List a -> List (List a)
 group groupQuantities items =
     let
-        group' quantity = List.take quantity items
+        group' quantity =
+            let
+                ( start, end ) =
+                    quantity
+            in
+                Array.fromList items |> Array.slice start end |> Array.toList
     in
         List.map group' groupQuantities
+
 
 parseLine : String -> ParsedLine
 parseLine row =
     let
-        elements = String.split "," row
-        toInt str = Just (String.toInt str |> Result.withDefault 0)
-        a = List.take 1 elements |> List.head
-        b = List.take 1 elements |> List.head
+        elements =
+            String.split "," row |> Array.fromList
+
+        toInt str =
+            Just (String.toInt str |> Result.withDefault 0)
     in
-        log "split" (Maybe.map String.trim a, Maybe.andThen b toInt)
+        ( Array.get 0 elements |> Maybe.map String.trim
+        , Array.get 1 elements `Maybe.andThen` toInt
+        )
+
 
 combine : List ParsedLine -> List ParsedLine -> DataGroup
 combine a b =
     let
         combine' lineA lineB =
             let
-                (identity,women) = lineA
-                (_,men) = lineB
+                ( identity, women ) =
+                    lineA
+
+                ( _, men ) =
+                    lineB
             in
-                log "parsed" (AverageIncomeRow identity women men)
+                AverageIncomeRow identity women men
     in
         List.map2 combine' a b
 
@@ -57,14 +74,17 @@ combine a b =
 massage : String -> List String
 massage data =
     String.trim data
-    |> String.lines
+        |> String.lines
 
 
-parse : List Int -> String -> String -> List DataGroup
+parse : List ( Int, Int ) -> String -> String -> List DataGroup
 parse groupQuantities women men =
     let
-        groupedWomen = massage women |> List.map parseLine |> group groupQuantities
-        groupedMen = massage men |> List.map parseLine |> group groupQuantities
+        groupedWomen =
+            massage women |> List.map parseLine |> group groupQuantities
+
+        groupedMen =
+            massage men |> List.map parseLine |> group groupQuantities
     in
         List.map2 combine groupedWomen groupedMen
 
@@ -96,7 +116,7 @@ update message model =
 
 
 data =
-    parse [2, 2, 6] women men
+    parse [ ( 0, 2 ), ( 2, 4 ), ( 2, 10 ) ] women men
 
 
 women =
