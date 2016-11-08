@@ -54,8 +54,17 @@ labelsFromDataGroup dataGroup =
         List.map draw dataGroup
 
 
-valuesFromDataGroup : Maybe Int -> DataGroup -> List (Maybe (Shape a))
-valuesFromDataGroup maxSalary dataGroup =
+animate : Float -> Float -> Float -> Float -> Float
+animate delay duration time value =
+    let
+        t =
+            clamp 0 duration (time - delay)
+    in
+        value * sin (t / duration * (pi / 2))
+
+
+valuesFromDataGroup : Float -> Maybe Int -> DataGroup -> List (Maybe (Shape a))
+valuesFromDataGroup t maxSalary dataGroup =
     let
         draw row =
             let
@@ -68,11 +77,14 @@ valuesFromDataGroup maxSalary dataGroup =
                 max =
                     Maybe.withDefault 1 maxSalary
 
+                animate' value =
+                    animate 0.25 0.35 t value
+
                 wp =
-                    women / max * 400
+                    animate' (women / max * 400)
 
                 mp =
-                    men / max * 400
+                    animate' (men / max * 400)
             in
                 Just
                     (group
@@ -109,7 +121,7 @@ drawChart t maxSalary avgSalary dataGroups =
                 |> move ( 0, 220 )
 
         values =
-            List.map (valuesFromDataGroup maxSalary) dataGroups
+            List.map (valuesFromDataGroup t maxSalary) dataGroups
                 |> group'
                 |> move ( 200, 220 )
 
