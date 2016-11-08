@@ -116,7 +116,7 @@ update message model =
 
 
 data =
-    parse [ ( 0, 2 ), ( 2, 4 ), ( 2, 10 ) ] women men
+    parse [ ( 0, 2 ), ( 2, 4 ), ( 4, 10 ) ] women men
 
 
 women =
