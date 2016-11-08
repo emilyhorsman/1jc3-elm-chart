@@ -28,7 +28,10 @@ type alias ParsedLine =
     ( Maybe String, Maybe Int )
 
 
-group : List ( Int, Int ) -> List a -> List (List a)
+type alias DataSlices = List ( Int, Int )
+
+
+group : DataSlices -> List a -> List (List a)
 group groupQuantities items =
     let
         group' quantity =
@@ -68,7 +71,7 @@ combine a b =
             in
                 AverageIncomeRow identity women men
     in
-        List.map2 combine' a b
+        log "combined" (List.map2 combine' a b)
 
 
 massage : String -> List String
@@ -77,16 +80,16 @@ massage data =
         |> String.lines
 
 
-parse : List ( Int, Int ) -> String -> String -> List DataGroup
-parse groupQuantities women men =
-    let
-        groupedWomen =
-            massage women |> List.map parseLine |> group groupQuantities
+parse' : DataSlices -> String -> List (List ParsedLine)
+parse' groupQuantities dataString =
+    massage dataString
+        |> List.map parseLine
+        |> group groupQuantities
 
-        groupedMen =
-            massage men |> List.map parseLine |> group groupQuantities
-    in
-        List.map2 combine groupedWomen groupedMen
+
+parse : DataSlices -> String -> String -> List DataGroup
+parse groupQuantities women men =
+    List.map2 combine (parse' groupQuantities women) (parse' groupQuantities men)
 
 
 type Message
