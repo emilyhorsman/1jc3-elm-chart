@@ -133,7 +133,7 @@ drawChart t maxSalary avgSalary dataGroups =
     in
         group
             [ labelsColumn
-            , line ( avgX, -250 ) ( avgX, 250 ) |> outlined (solid 1) chartDivider
+            , line ( avgX, -250 ) ( avgX, 250 ) |> outlined (solid 0.5) chartDivider
             , values
             ]
             |> move ( -400, 0 )
