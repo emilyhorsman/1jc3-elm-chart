@@ -9,6 +9,18 @@ import Array
 import Debug exposing (log)
 
 
+-- Palette from
+-- http://www.mulinblog.com/a-color-palette-optimized-for-data-visualization/
+
+
+chartBrown =
+    rgba 178 145 47 1
+
+
+chartPurple =
+    rgba 178 118 178 1
+
+
 flatten : List (List a) -> List a
 flatten list =
     List.foldr (++) [] list
@@ -38,11 +50,43 @@ labelsFromDataGroup dataGroup =
         List.map draw dataGroup
 
 
+valuesFromDataGroup : Maybe Int -> DataGroup -> List (Maybe (Shape a))
+valuesFromDataGroup maxSalary dataGroup =
+    let
+        draw row =
+            let
+                women =
+                    Maybe.withDefault 0 row.women
+
+                men =
+                    Maybe.withDefault 0 row.men
+
+                max =
+                    Maybe.withDefault 1 maxSalary
+
+                wp =
+                    women / max * 400
+
+                mp =
+                    men / max * 400
+            in
+                Just
+                    (group
+                        [ women |> toString |> text |> filled black |> move ( wp + 10, 6 )
+                        , men |> toString |> text |> filled black |> move ( mp + 10, -4 )
+                        , rect wp 10 |> filled chartPurple |> move ( wp / 2, 10 )
+                        , rect mp 10 |> filled chartBrown |> move ( mp / 2, 0 )
+                        ]
+                    )
+    in
+        List.map draw dataGroup
+
+
 addGroupSeperators list =
     List.intersperse [ Nothing ] list
 
 
-drawChart t dataGroups =
+drawChart t maxSalary dataGroups =
     let
         offset index shape =
             Maybe.map (move ( 0, toFloat (index * -40) )) shape
@@ -53,8 +97,23 @@ drawChart t dataGroups =
                 |> flatten
                 |> List.indexedMap offset
                 |> justValues
+                |> group
+                |> move ( 0, 220 )
+
+        values =
+            List.map (valuesFromDataGroup maxSalary) dataGroups
+                |> addGroupSeperators
+                |> flatten
+                |> List.indexedMap offset
+                |> justValues
+                |> group
+                |> move ( 200, 220 )
     in
-        group labelsColumn |> move ( 0, 220 )
+        group
+            [ labelsColumn
+            , values
+            ]
+            |> move ( -400, 0 )
 
 
 type alias DataGroup =
@@ -154,7 +213,7 @@ view model =
         t =
             model.t
     in
-        collage 1000 500 [ drawChart t data ]
+        collage 1000 500 [ drawChart t maxSalary data ]
 
 
 update message model =
@@ -165,6 +224,16 @@ update message model =
 
 data =
     parse [ ( 0, 2 ), ( 2, 4 ), ( 4, 10 ) ] women men
+
+
+maxSalary =
+    flatten data
+        -- We know men make more, so we only need their numbers to find
+        -- the max salary.
+        |>
+            List.map .men
+        |> justValues
+        |> List.maximum
 
 
 women =
