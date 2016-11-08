@@ -21,6 +21,10 @@ chartPurple =
     rgba 178 118 178 1
 
 
+chartDivider =
+    rgba 200 200 200 1
+
+
 flatten : List (List a) -> List a
 flatten list =
     List.foldr (++) [] list
@@ -86,7 +90,7 @@ addGroupSeperators list =
     List.intersperse [ Nothing ] list
 
 
-drawChart t maxSalary dataGroups =
+drawChart t maxSalary avgSalary dataGroups =
     let
         offset index shape =
             Maybe.map (move ( 0, toFloat (index * -40) )) shape
@@ -108,9 +112,16 @@ drawChart t maxSalary dataGroups =
                 |> justValues
                 |> group
                 |> move ( 200, 220 )
+
+        maxX =
+            maxSalary |> Maybe.map toFloat |> Maybe.withDefault 1
+
+        avgX =
+            200 + avgSalary / maxX * 400
     in
         group
             [ labelsColumn
+            , line ( avgX, -250 ) ( avgX, 250 ) |> outlined (solid 1) chartDivider
             , values
             ]
             |> move ( -400, 0 )
@@ -213,7 +224,7 @@ view model =
         t =
             model.t
     in
-        collage 1000 500 [ drawChart t maxSalary data ]
+        collage 1000 500 [ drawChart t maxSalary avgSalary data ]
 
 
 update message model =
@@ -234,6 +245,19 @@ maxSalary =
             List.map .men
         |> justValues
         |> List.maximum
+
+
+avgSalary =
+    let
+        salaries =
+            flatten data
+                |> List.foldl (\item list -> item.women :: item.men :: list) []
+                |> justValues
+
+        sum =
+            List.sum salaries
+    in
+        toFloat sum / toFloat (List.length salaries)
 
 
 women =
