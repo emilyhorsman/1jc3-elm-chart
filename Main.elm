@@ -9,15 +9,52 @@ import Array
 import Debug exposing (log)
 
 
-drawChartGroup groupIndex dataGroup =
+flatten : List (List a) -> List a
+flatten list =
+    List.foldr (++) [] list
+
+
+justValues' : Maybe a -> List a -> List a
+justValues' item acc =
+    case item of
+        Nothing ->
+            acc
+
+        Just something ->
+            acc ++ [ something ]
+
+
+justValues : List (Maybe a) -> List a
+justValues list =
+    List.foldl justValues' [] list
+
+
+labelsFromDataGroup : DataGroup -> List (Maybe (Shape a))
+labelsFromDataGroup dataGroup =
     let
-        draw index row =
-            Maybe.withDefault "-" row.identity |> text |> filled black |> move (0, toFloat (index * -20))
+        draw row =
+            Just (Maybe.withDefault "-" row.identity |> text |> filled black)
     in
-        group (List.indexedMap draw dataGroup) |> move (0, toFloat (groupIndex * -40))
+        List.map draw dataGroup
+
+
+addGroupSeperators list =
+    List.intersperse [ Nothing ] list
+
 
 drawChart t dataGroups =
-    group (List.indexedMap drawChartGroup dataGroups)
+    let
+        offset index shape =
+            Maybe.map (move ( 0, toFloat (index * -40) )) shape
+
+        labelsColumn =
+            List.map labelsFromDataGroup dataGroups
+                |> addGroupSeperators
+                |> flatten
+                |> List.indexedMap offset
+                |> justValues
+    in
+        group labelsColumn |> move ( 0, 220 )
 
 
 type alias DataGroup =
@@ -35,7 +72,8 @@ type alias ParsedLine =
     ( Maybe String, Maybe Int )
 
 
-type alias DataSlices = List ( Int, Int )
+type alias DataSlices =
+    List ( Int, Int )
 
 
 groupLines : DataSlices -> List a -> List (List a)
