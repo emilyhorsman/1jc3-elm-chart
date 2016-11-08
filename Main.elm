@@ -9,8 +9,15 @@ import Array
 import Debug exposing (log)
 
 
-chart t =
-    text (toString t) |> filled black
+drawChartGroup groupIndex dataGroup =
+    let
+        draw index row =
+            Maybe.withDefault "-" row.identity |> text |> filled black |> move (0, toFloat (index * -20))
+    in
+        group (List.indexedMap draw dataGroup) |> move (0, toFloat (groupIndex * -40))
+
+drawChart t dataGroups =
+    group (List.indexedMap drawChartGroup dataGroups)
 
 
 type alias DataGroup =
@@ -31,8 +38,8 @@ type alias ParsedLine =
 type alias DataSlices = List ( Int, Int )
 
 
-group : DataSlices -> List a -> List (List a)
-group groupQuantities items =
+groupLines : DataSlices -> List a -> List (List a)
+groupLines groupQuantities items =
     let
         group' quantity =
             let
@@ -84,7 +91,7 @@ parse' : DataSlices -> String -> List (List ParsedLine)
 parse' groupQuantities dataString =
     massage dataString
         |> List.map parseLine
-        |> group groupQuantities
+        |> groupLines groupQuantities
 
 
 parse : DataSlices -> String -> String -> List DataGroup
@@ -109,7 +116,7 @@ view model =
         t =
             model.t
     in
-        collage 1000 500 [ chart t ]
+        collage 1000 500 [ drawChart t data ]
 
 
 update message model =
