@@ -105,7 +105,7 @@ addGroupSeperators list =
 drawChart t maxSalary avgSalary dataGroups =
     let
         offset index shape =
-            Maybe.map (move ( 0, toFloat (index * -40) )) shape
+            Maybe.map (move ( 0, toFloat (index * -35) )) shape
 
         group' lists =
             lists
@@ -125,6 +125,14 @@ drawChart t maxSalary avgSalary dataGroups =
                 |> group'
                 |> move ( 200, 220 )
 
+        legend =
+            group
+                [ square 10 |> filled chartPurple
+                , text "Women" |> filled black |> move (10, -3)
+                , square 10 |> filled chartBrown |> move (0, -20)
+                , text "Men" |> filled black |> move (10, -24)
+                ]
+
         maxX =
             maxSalary |> Maybe.map toFloat |> Maybe.withDefault 1
 
@@ -133,8 +141,9 @@ drawChart t maxSalary avgSalary dataGroups =
     in
         group
             [ labelsColumn
-            , line ( avgX, -250 ) ( avgX, 250 ) |> outlined (solid 0.5) chartDivider
+            , line ( avgX, -200 ) ( avgX, 250 ) |> outlined (solid 0.5) chartDivider
             , values
+            , legend |> move (700, 200)
             ]
             |> move ( -400, 0 )
 
@@ -236,7 +245,17 @@ view model =
         t =
             model.t
     in
-        collage 1000 500 [ drawChart t maxSalary avgSalary data ]
+        collage 1000 500
+            [ drawChart t maxSalary avgSalary data |> move (0, -20)
+            , text "Average wages and salaries by sociocultural identity in 2010 ($ CAD)"
+                |> filled black
+                |> scale 1.2
+                |> move (-190, 240)
+            , text "Source: Statistics Canada, 2011 National Household Survey, Statistics Canada Catalogue no. 99-014-X2011041."
+                |> filled black
+                |> scale 0.9
+                |> move (-220, -240)
+            ]
 
 
 update message model =
