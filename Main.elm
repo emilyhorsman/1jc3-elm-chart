@@ -80,6 +80,9 @@ valuesFromDataGroup t maxSalary dataGroup =
                 animate' value =
                     animate 0.25 0.35 t value
 
+                opacity =
+                    animate (0.6 + (toFloat row.index) / 15) 0.2 t 1
+
                 wp =
                     animate' (women / max * 400)
 
@@ -88,8 +91,8 @@ valuesFromDataGroup t maxSalary dataGroup =
             in
                 Just
                     (group
-                        [ women |> toString |> text |> filled black |> move ( wp + 10, 6 )
-                        , men |> toString |> text |> filled black |> move ( mp + 10, -4 )
+                        [ women |> toString |> text |> filled black |> makeTransparent opacity |> move ( wp + 10, 6 )
+                        , men |> toString |> text |> filled black |> makeTransparent opacity |> move ( mp + 10, -4 )
                         , rect wp 10 |> filled chartPurple |> move ( wp / 2, 10 )
                         , rect mp 10 |> filled chartBrown |> move ( mp / 2, 0 )
                         ]
@@ -128,9 +131,9 @@ drawChart t maxSalary avgSalary dataGroups =
         legend =
             group
                 [ square 10 |> filled chartPurple
-                , text "Women" |> filled black |> move (10, -3)
-                , square 10 |> filled chartBrown |> move (0, -20)
-                , text "Men" |> filled black |> move (10, -24)
+                , text "Women" |> filled black |> move ( 10, -3 )
+                , square 10 |> filled chartBrown |> move ( 0, -20 )
+                , text "Men" |> filled black |> move ( 10, -24 )
                 ]
 
         maxX =
@@ -143,7 +146,7 @@ drawChart t maxSalary avgSalary dataGroups =
             [ labelsColumn
             , line ( avgX, -200 ) ( avgX, 250 ) |> outlined (solid 0.5) chartDivider
             , values
-            , legend |> move (700, 200)
+            , legend |> move ( 700, 200 )
             ]
             |> move ( -400, 0 )
 
@@ -153,14 +156,15 @@ type alias DataGroup =
 
 
 type alias AverageIncomeRow =
-    { identity : Maybe String
+    { index : Int
+    , identity : Maybe String
     , women : Maybe Int
     , men : Maybe Int
     }
 
 
 type alias ParsedLine =
-    ( Maybe String, Maybe Int )
+    ( Int, Maybe String, Maybe Int )
 
 
 type alias DataSlices =
@@ -180,8 +184,8 @@ groupLines groupQuantities items =
         List.map group' groupQuantities
 
 
-parseLine : String -> ParsedLine
-parseLine row =
+parseLine : Int -> String -> ParsedLine
+parseLine index row =
     let
         elements =
             String.split "," row |> Array.fromList
@@ -189,7 +193,8 @@ parseLine row =
         toInt str =
             Just (String.toInt str |> Result.withDefault 0)
     in
-        ( Array.get 0 elements |> Maybe.map String.trim
+        ( index
+        , Array.get 0 elements |> Maybe.map String.trim
         , Array.get 1 elements `Maybe.andThen` toInt
         )
 
@@ -199,13 +204,13 @@ combine a b =
     let
         combine' lineA lineB =
             let
-                ( identity, women ) =
+                ( index, identity, women ) =
                     lineA
 
-                ( _, men ) =
+                ( _, _, men ) =
                     lineB
             in
-                AverageIncomeRow identity women men
+                AverageIncomeRow index identity women men
     in
         log "combined" (List.map2 combine' a b)
 
@@ -219,7 +224,7 @@ massage data =
 parse' : DataSlices -> String -> List (List ParsedLine)
 parse' groupQuantities dataString =
     massage dataString
-        |> List.map parseLine
+        |> List.indexedMap parseLine
         |> groupLines groupQuantities
 
 
@@ -245,16 +250,17 @@ view model =
         t =
             model.t
     in
-        collage 1000 500
-            [ drawChart t maxSalary avgSalary data |> move (0, -20)
+        collage 1000
+            500
+            [ drawChart t maxSalary avgSalary data |> move ( 0, -20 )
             , text "Average wages and salaries by sociocultural identity in 2010 ($ CAD)"
                 |> filled black
                 |> scale 1.2
-                |> move (-190, 240)
+                |> move ( -190, 240 )
             , text "Source: Statistics Canada, 2011 National Household Survey, Statistics Canada Catalogue no. 99-014-X2011041."
                 |> filled black
                 |> scale 0.9
-                |> move (-220, -240)
+                |> move ( -220, -240 )
             ]
 
 
